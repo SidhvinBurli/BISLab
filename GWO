@@ -1,0 +1,71 @@
+import numpy as np
+
+# Define the objective function to optimize
+def objective_function(x):
+    return np.sum(x**2)  # Example: Minimize the sum of squares
+
+# Grey Wolf Optimizer function
+def grey_wolf_optimizer(objective_function, n_wolves=30, dim=5, bounds=(-5, 5), max_iterations=100):
+    lower_bound, upper_bound = bounds
+    
+    # Initialize the population of wolves
+    wolves = np.random.uniform(lower_bound, upper_bound, (n_wolves, dim))
+    fitness = np.apply_along_axis(objective_function, 1, wolves)
+    
+    # Identify alpha, beta, and delta wolves
+    sorted_indices = np.argsort(fitness)
+    alpha, beta, delta = wolves[sorted_indices[:3]]
+    
+    # Main loop
+    for iteration in range(max_iterations):
+        a = 2 - (2 * iteration / max_iterations)  # Linearly decreasing from 2 to 0
+        
+        # Update the positions of the wolves
+        for i in range(n_wolves):
+            for j in range(dim):
+                r1, r2 = np.random.random(), np.random.random()
+                A1 = 2 * a * r1 - a
+                C1 = 2 * r2
+                D_alpha = abs(C1 * alpha[j] - wolves[i, j])
+                X1 = alpha[j] - A1 * D_alpha
+
+                r1, r2 = np.random.random(), np.random.random()
+                A2 = 2 * a * r1 - a
+                C2 = 2 * r2
+                D_beta = abs(C2 * beta[j] - wolves[i, j])
+                X2 = beta[j] - A2 * D_beta
+
+                r1, r2 = np.random.random(), np.random.random()
+                A3 = 2 * a * r1 - a
+                C3 = 2 * r2
+                D_delta = abs(C3 * delta[j] - wolves[i, j])
+                X3 = delta[j] - A3 * D_delta
+
+                # Update the wolf's position
+                wolves[i, j] = (X1 + X2 + X3) / 3
+        
+        # Clamp the wolves' positions within the bounds
+        wolves = np.clip(wolves, lower_bound, upper_bound)
+        
+        # Evaluate fitness of the updated population
+        fitness = np.apply_along_axis(objective_function, 1, wolves)
+        
+        # Update alpha, beta, and delta wolves
+        sorted_indices = np.argsort(fitness)
+        alpha, beta, delta = wolves[sorted_indices[:3]]
+
+        print(f"Iteration {iteration + 1}: Best Fitness = {fitness[sorted_indices[0]]}")
+    
+    return alpha, fitness[sorted_indices[0]]
+
+# Parameters
+n_wolves = 30
+dim = 5
+bounds = (-10, 10)
+max_iterations = 100
+
+# Run the algorithm
+best_solution, best_fitness = grey_wolf_optimizer(objective_function, n_wolves=n_wolves, dim=dim, bounds=bounds, max_iterations=max_iterations)
+
+print("Best Solution:", best_solution)
+print("Best Fitness:", best_fitness)
